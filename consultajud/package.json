@@ -1,0 +1,8 @@
+{
+  "name": "consultajud",
+  "version": "1.0.0",
+  "description": "Consulta processual via DataJud e DJEN",
+  "engines": {
+    "node": "18.x"
+  }
+}

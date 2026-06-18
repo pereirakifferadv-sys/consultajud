@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConsultaJud — DataJud & DJEN</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --azul: #1a4f8a;
+      --azul-claro: #2563eb;
+      --cinza: #f1f5f9;
+      --borda: #cbd5e1;
+      --texto: #1e293b;
+      --verde: #16a34a;
+      --vermelho: #dc2626;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--cinza);
+      color: var(--texto);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--azul);
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; opacity: 0.75; }
+
+    .logo { font-size: 1.75rem; }
+
+    main { max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+
+    .abas {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .aba {
+      padding: 0.6rem 1.25rem;
+      border: 2px solid var(--borda);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #64748b;
+      transition: all .15s;
+    }
+
+    .aba.ativa {
+      background: var(--azul);
+      border-color: var(--azul);
+      color: white;
+    }
+
+    .card {
+      background: white;
+      border: 2px solid var(--borda);
+      border-radius: 0 8px 8px 8px;
+      padding: 1.5rem;
+    }
+
+    .campo { margin-bottom: 1rem; }
+    label  { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: #475569; }
+
+    input, select {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1.5px solid var(--borda);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: var(--texto);
+      outline: none;
+      transition: border .15s;
+    }
+
+    input:focus, select:focus { border-color: var(--azul-claro); }
+
+    .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    @media (max-width: 520px) { .linha { grid-template-columns: 1fr; } }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.5rem;
+      background: var(--azul-claro);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn:hover { background: var(--azul); }
+    .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    .btn.carregando .spinner { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Resultado */
+    #resultado { margin-top: 1.5rem; }
+
+    .erro {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      border-radius: 6px;
+      padding: 1rem;
+      color: var(--vermelho);
+    }
+
+    .processo-header {
+      background: var(--azul);
+      color: white;
+      border-radius: 8px 8px 0 0;
+      padding: 1rem 1.25rem;
+    }
+
+    .processo-header h2 { font-size: 1rem; }
+    .processo-header .numero { font-size: 0.85rem; opacity: .8; margin-top: .2rem; }
+
+    .processo-body { border: 1.5px solid var(--borda); border-top: none; border-radius: 0 0 8px 8px; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0;
+    }
+
+    .info-item {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--borda);
+      border-right: 1px solid var(--borda);
+    }
+
+    .info-item:last-child { border-right: none; }
+
+    .info-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .05em; color: #64748b; font-weight: 600; }
+    .info-valor { font-size: 0.9rem; margin-top: .15rem; color: var(--texto); }
+
+    .secao-titulo {
+      padding: 0.6rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--borda);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #475569;
+    }
+
+    .parte-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      padding: 0.6rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+    }
+
+    .parte-polo {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .polo-ativo   { background: #dbeafe; color: #1d4ed8; }
+    .polo-passivo { background: #fee2e2; color: #b91c1c; }
+    .polo-outros  { background: #f3f4f6; color: #374151; }
+
+    .mov-item {
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      gap: 1rem;
+      font-size: 0.88rem;
+    }
+
+    .mov-data {
+      color: #64748b;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      min-width: 90px;
+    }
+
+    /* DJEN */
+    .djen-item {
+      border: 1.5px solid var(--borda);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .djen-header {
+      background: #eff6ff;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    .djen-numero { font-weight: 700; font-size: 0.9rem; color: var(--azul); }
+    .djen-data   { font-size: 0.8rem; color: #64748b; }
+
+    .djen-body { padding: 0.75rem 1rem; font-size: 0.88rem; line-height: 1.6; }
+
+    .djen-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--borda);
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      background: #e2e8f0;
+      border-radius: 4px;
+      color: #475569;
+    }
+
+    .paginacao {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .paginacao button {
+      padding: 0.4rem 0.9rem;
+      border: 1.5px solid var(--borda);
+      border-radius: 5px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .paginacao button.ativa { background: var(--azul); color: white; border-color: var(--azul); }
+
+    .vazio { text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚖️</div>
+  <div>
+    <h1>ConsultaJud</h1>
+    <p>DataJud (CNJ) &amp; DJEN — Consulta Processual</p>
+  </div>
+</header>
+
+<main>
+  <div class="abas">
+    <button class="aba ativa" onclick="trocarAba('datajud', this)">DataJud — Processo</button>
+    <button class="aba" onclick="trocarAba('djen', this)">DJEN — Publicações</button>
+  </div>
+
+  <!-- ABA DATAJUD -->
+  <div id="aba-datajud" class="card">
+    <div class="campo">
+      <label>Número do Processo (formato CNJ)</label>
+      <input type="text" id="numero-processo"
+        placeholder="0000000-00.0000.0.00.0000"
+        maxlength="30"
+        oninput="mascaraProcesso(this)">
+    </div>
+    <div class="campo">
+      <label>Tribunal (opcional — detectado automaticamente)</label>
+      <select id="tribunal-select">
+        <option value="">— Detectar pelo número —</option>
+        <optgroup label="Justiça Estadual">
+          <option value="tjac">TJAC</option><option value="tjal">TJAL</option>
+          <option value="tjap">TJAP</option><option value="tjam">TJAM</option>
+          <option value="tjba">TJBA</option><option value="tjce">TJCE</option>
+          <option value="tjdft">TJDFT</option><option value="tjes">TJES</option>
+          <option value="tjgo">TJGO</option><option value="tjma">TJMA</option>
+          <option value="tjmt">TJMT</option><option value="tjms">TJMS</option>
+          <option value="tjmg">TJMG</option><option value="tjpa">TJPA</option>
+          <option value="tjpb">TJPB</option><option value="tjpr">TJPR</option>
+          <option value="tjpe">TJPE</option><option value="tjpi">TJPI</option>
+          <option value="tjrj">TJRJ</option><option value="tjrn">TJRN</option>
+          <option value="tjrs">TJRS</option><option value="tjro">TJRO</option>
+          <option value="tjrr">TJRR</option><option value="tjsc">TJSC</option>
+          <option value="tjse">TJSE</option><option value="tjsp">TJSP</option>
+          <option value="tjto">TJTO</option>
+        </optgroup>
+        <optgroup label="Justiça Federal">
+          <option value="trf1">TRF1</option><option value="trf2">TRF2</option>
+          <option value="trf3">TRF3</option><option value="trf4">TRF4</option>
+          <option value="trf5">TRF5</option><option value="trf6">TRF6</option>
+        </optgroup>
+        <optgroup label="Justiça do Trabalho">
+          <option value="trt1">TRT1</option><option value="trt2">TRT2</option>
+          <option value="trt3">TRT3</option><option value="trt4">TRT4</option>
+          <option value="trt5">TRT5</option><option value="trt6">TRT6</option>
+          <option value="trt7">TRT7</option><option value="trt8">TRT8</option>
+          <option value="trt9">TRT9</option><option value="trt10">TRT10</option>
+          <option value="trt11">TRT11</option><option value="trt12">TRT12</option>
+          <option value="trt13">TRT13</option><option value="trt14">TRT14</option>
+          <option value="trt15">TRT15</option><option value="trt16">TRT16</option>
+          <option value="trt17">TRT17</option><option value="trt18">TRT18</option>
+          <option value="trt19">TRT19</option><option value="trt20">TRT20</option>
+          <option value="trt21">TRT21</option><option value="trt22">TRT22</option>
+          <option value="trt23">TRT23</option><option value="trt24">TRT24</option>
+        </optgroup>
+        <optgroup label="Tribunais Superiores">
+          <option value="stf">STF</option><option value="stj">STJ</option>
+          <option value="tst">TST</option><option value="tse">TSE</option>
+          <option value="stm">STM</option>
+        </optgroup>
+      </select>
+    </div>
+    <button class="btn" id="btn-datajud" onclick="buscarDatajud()">
+      <span class="spinner"></span>
+      Consultar DataJud
+    </button>
+  </div>
+
+  <!-- ABA DJEN -->
+  <div id="aba-djen" class="card" style="display:none">
+    <div class="campo">
+      <label>Número do Processo (CNJ)</label>
+      <input type="text" id="djen-numero"
+        placeholder="0000000-00.0000.0.00.0000"
+        oninput="mascaraProcesso(this)">
+    </div>
+    <div class="linha">
+      <div class="campo">
+        <label>Data Início</label>
+        <input type="date" id="djen-inicio">
+      </div>
+      <div class="campo">
+        <label>Data Fim</label>
+        <input type="date" id="djen-fim">
+      </div>
+    </div>
+    <button class="btn" id="btn-djen" onclick="buscarDjen(1)">
+      <span class="spinner"></span>
+      Buscar no DJEN
+    </button>
+  </div>
+
+  <div id="resultado"></div>
+</main>
+
+<script>
+  let paginaAtual = 1;
+
+  function trocarAba(aba, el) {
+    document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+    el.classList.add('ativa');
+    document.getElementById('aba-datajud').style.display = aba === 'datajud' ? '' : 'none';
+    document.getElementById('aba-djen').style.display   = aba === 'djen'    ? '' : 'none';
+    document.getElementById('resultado').innerHTML = '';
+  }
+
+  function mascaraProcesso(el) {
+    let v = el.value.replace(/\D/g, '');
+    let r = '';
+    if (v.length > 0)  r += v.substring(0, 7);
+    if (v.length > 7)  r += '-' + v.substring(7, 9);
+    if (v.length > 9)  r += '.' + v.substring(9, 13);
+    if (v.length > 13) r += '.' + v.substring(13, 14);
+    if (v.length > 14) r += '.' + v.substring(14, 16);
+    if (v.length > 16) r += '.' + v.substring(16, 20);
+    el.value = r;
+  }
+
+  function setLoading(btnId, estado) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = estado;
+    btn.classList.toggle('carregando', estado);
+  }
+
+  async function buscarDatajud() {
+    const numero   = document.getElementById('numero-processo').value.trim();
+    const tribunal = document.getElementById('tribunal-select').value;
+    const res      = document.getElementById('resultado');
+
+    if (!numero) { res.innerHTML = erro('Informe o número do processo.'); return; }
+
+    setLoading('btn-datajud', true);
+    res.innerHTML = '';
+
+    try {
+      const resp = await fetch('/api/datajud', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero, tribunal })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        res.innerHTML = erro(data.erro + (data.detalhe ? `<br><small>${data.detalhe}</small>` : ''));
+        return;
+      }
+
+      res.innerHTML = renderProcesso(data);
+    } catch (e) {
+      res.innerHTML = erro('Erro de conexão: ' + e.message);
+    } finally {
+      setLoading('btn-datajud', false);
+    }
+  }
+
+  async function buscarDjen(pagina) {
+    paginaAtual = pagina;
+    const numero = document.getElementById('djen-numero').value.trim();
+    const inicio = document.getElementById('djen-inicio').value;
+    const fim    = document.getElementById('djen-fim').value;
+    const res    = document.getElementById('resultado');
+
+    if (!numero && !inicio) {
+      res.innerHTML = erro('Informe o número do processo ou um período de datas.');
+      return;
+    }
+
+    setLoading('btn-djen', true);
+    res.innerHTML = '';
+
+    try {
+      const resp = await fetch('/api/djen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero, dataInicio: inicio, dataFim: fim, pagina })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        res.innerHTML = erro(data.erro + (data.detalhe ? `<br><small>${data.detalhe}</small>` : ''));
+        return;
+      }
+
+      res.innerHTML = renderDjen(data, pagina);
+    } catch (e) {
+      res.innerHTML = erro('Erro de conexão: ' + e.message);
+    } finally {
+      setLoading('btn-djen', false);
+    }
+  }
+
+  function erro(msg) {
+    return `<div class="erro">⚠️ ${msg}</div>`;
+  }
+
+  function fmtData(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  function fmtDataHora(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleString('pt-BR');
+  }
+
+  function poloCss(polo) {
+    const p = (polo || '').toLowerCase();
+    if (p.includes('ativo'))   return 'polo-ativo';
+    if (p.includes('passivo')) return 'polo-passivo';
+    return 'polo-outros';
+  }
+
+  function renderProcesso(p) {
+    const partes = (p.partes || []).map(pt => `
+      <div class="parte-item">
+        <span class="parte-polo ${poloCss(pt.polo)}">${pt.polo || 'Parte'}</span>
+        <div>
+          <strong>${pt.nome || '—'}</strong>
+          ${pt.advogados?.length ? `<div style="font-size:.82rem;color:#64748b;margin-top:.15rem">Adv: ${pt.advogados.map(a=>a.nome).join(', ')}</div>` : ''}
+        </div>
+      </div>`).join('') || '<div class="vazio">Sem partes</div>';
+
+    const movimentos = (p.movimentos || []).map(m => `
+      <div class="mov-item">
+        <span class="mov-data">${fmtDataHora(m.data)}</span>
+        <div>
+          <strong>${m.descricao || '—'}</strong>
+          ${m.complemento ? `<div style="font-size:.82rem;color:#64748b">${m.complemento}</div>` : ''}
+        </div>
+      </div>`).join('') || '<div class="vazio">Sem movimentos</div>';
+
+    return `
+      <div class="processo-header">
+        <h2>${p.classe || 'Processo'}</h2>
+        <div class="numero">${p.numero}</div>
+      </div>
+      <div class="processo-body">
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Tribunal</div><div class="info-valor">${p.tribunal || '—'}</div></div>
+          <div class="info-item"><div class="info-label">Órgão Julgador</div><div class="info-valor">${p.orgaoJulgador || '—'}</div></div>
+          <div class="info-item"><div class="info-label">Ajuizamento</div><div class="info-valor">${fmtData(p.dataAjuizamento)}</div></div>
+          <div class="info-item"><div class="info-label">Grau</div><div class="info-valor">${p.grau || '—'}</div></div>
+          <div class="info-item" style="grid-column:1/-1"><div class="info-label">Assunto</div><div class="info-valor">${p.assunto || '—'}</div></div>
+        </div>
+        <div class="secao-titulo">Partes</div>
+        ${partes}
+        <div class="secao-titulo">Movimentações (últimas 20)</div>
+        ${movimentos}
+      </div>`;
+  }
+
+  function renderDjen(data, pagina) {
+    // A API DJEN pode retornar diferentes estruturas; tentamos as mais comuns
+    const comunicacoes = data.comunicacoes || data.content || data.data || data.items || (Array.isArray(data) ? data : []);
+    const total = data.totalElements || data.total || comunicacoes.length;
+
+    if (!comunicacoes.length) return '<div class="vazio">Nenhuma publicação encontrada.</div>';
+
+    const itens = comunicacoes.map(c => {
+      const numero  = c.numeroCNJ || c.numeroProcesso || c.numero || '—';
+      const dataPub = fmtData(c.dataDisponibilizacao || c.data || c.dataPublicacao);
+      const texto   = c.texto || c.conteudo || c.teor || '';
+      const tribunal= c.siglaTribunal || c.tribunal || '';
+      const tipo    = c.tipoComunicacao || c.tipo || '';
+
+      return `
+        <div class="djen-item">
+          <div class="djen-header">
+            <span class="djen-numero">${numero}</span>
+            <span class="djen-data">${dataPub}</span>
+          </div>
+          ${texto ? `<div class="djen-body">${texto.substring(0, 600)}${texto.length > 600 ? '...' : ''}</div>` : ''}
+          <div class="djen-meta">
+            ${tribunal ? `<span class="tag">${tribunal}</span>` : ''}
+            ${tipo     ? `<span class="tag">${tipo}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    const totalPags = Math.ceil(total / 20);
+    let paginacao = '';
+    if (totalPags > 1) {
+      const inicio = Math.max(1, pagina - 2);
+      const fim    = Math.min(totalPags, pagina + 2);
+      paginacao = '<div class="paginacao">';
+      if (pagina > 1) paginacao += `<button onclick="buscarDjen(${pagina-1})">‹ Anterior</button>`;
+      for (let i = inicio; i <= fim; i++) {
+        paginacao += `<button class="${i === pagina ? 'ativa' : ''}" onclick="buscarDjen(${i})">${i}</button>`;
+      }
+      if (pagina < totalPags) paginacao += `<button onclick="buscarDjen(${pagina+1})">Próximo ›</button>`;
+      paginacao += '</div>';
+    }
+
+    return `
+      <div style="font-size:.85rem;color:#64748b;margin-bottom:.75rem">${total} publicação(ões) encontrada(s)</div>
+      ${itens}
+      ${paginacao}`;
+  }
+</script>
+
+</body>
+</html>
